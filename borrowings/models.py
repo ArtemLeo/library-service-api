@@ -25,10 +25,6 @@ class Borrowing(models.Model):
     class Meta:
         constraints = [
             models.CheckConstraint(
-                check=Q(borrow_date__gte=timezone.now().date()),
-                name="borrow_date_not_past",
-            ),
-            models.CheckConstraint(
                 check=(
                         Q(expected_return_date__gte=F("borrow_date"))
                         & Q(actual_return_date__gte=F("borrow_date"))
@@ -70,6 +66,9 @@ class Borrowing(models.Model):
             **kwargs
     ):
         self.full_clean()
+        if self.pk is None:
+            self.full_clean()
+
         return super(Borrowing, self).save(
             force_insert, force_update, using, update_fields
         )
