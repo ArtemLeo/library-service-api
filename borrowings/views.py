@@ -27,5 +27,15 @@ class BorrowingViewSet(
 
         return BorrowingSerializer
 
+    def get_queryset(self):
+        return self.filter_queryset(self.queryset)
+
+    def filter_queryset(self, queryset):
+        current_user = self.request.user
+        if not current_user.is_staff:
+            queryset = queryset.filter(user=current_user)
+
+        return queryset
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
