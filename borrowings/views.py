@@ -1,9 +1,10 @@
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import mixins, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
-
 from borrowings.models import Borrowing
 from borrowings.serializers import (
     BorrowingSerializer,
@@ -24,7 +25,6 @@ class BorrowingViewSet(
     def get_serializer_class(self):
         if self.action in ["retrieve", "return_borrowing"]:
             return BorrowingDetailSerializer
-
         if self.action == "create":
             return BorrowingCreateSerializer
         return BorrowingSerializer
@@ -61,11 +61,26 @@ class BorrowingViewSet(
         Endpoint for marking a borrowing as
         returned by providing the actual return date
         """
-
         borrowing = self.get_object()
         serializer = self.get_serializer(borrowing, data=request.data)
-
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "is_active",
+                type=OpenApiTypes.BOOL,
+                description="Filter by actual return date (ex. ?is_active=True)",
+            ),
+            OpenApiParameter(
+                "user_id",
+                type=OpenApiTypes.INT,
+                description="Filter by user id (ex. ?user_id=2)",
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
