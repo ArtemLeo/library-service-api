@@ -1,7 +1,7 @@
+from datetime import datetime
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-
 from books.serializers import BookSerializer
 from borrowings.models import Borrowing
 
@@ -34,13 +34,29 @@ class BorrowingDetailSerializer(serializers.ModelSerializer):
         )
         read_only_fields = fields
 
-
-class BorrowingCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
-        data = super(BorrowingCreateSerializer, self).validate(attrs=attrs)
-        Borrowing.validate_inventory(attrs["book"], ValidationError)
+        data = super(BorrowingDetailSerializer, self).validate(attrs=attrs)
+
+        if self.instance.actual_return_date:
+            raise serializers.ValidationError(
+                "This borrowing has already been returned."
+            )
+
         return data
 
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        instance.actual_return_date = datetime.now().date()
+        instance.save()
+
+        book = instance.book
+        book.inventory += 1
+        book.save()
+
+        return instance
+
+
+class BorrowingCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Borrowing
         fields = (
@@ -50,12 +66,15 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
             "book",
         )
 
+    def validate(self, attrs):
+        data = super(BorrowingCreateSerializer, self).validate(attrs=attrs)
+        Borrowing.validate_inventory(attrs["book"], ValidationError)
+        return data
+
     @transaction.atomic
     def create(self, validated_data):
         borrowing = Borrowing.objects.create(**validated_data)
-
         book = validated_data.get("book")
         book.inventory -= 1
         book.save()
-
         return borrowing
