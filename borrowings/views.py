@@ -5,6 +5,7 @@ from borrowings.models import Borrowing
 from borrowings.serializers import (
     BorrowingSerializer,
     BorrowingDetailSerializer,
+    BorrowingCreateSerializer,
 )
 
 
@@ -19,6 +20,8 @@ class BorrowingViewSet(
     def get_serializer_class(self):
         if self.action == "retrieve":
             return BorrowingDetailSerializer
+        if self.action == "create":
+            return BorrowingCreateSerializer
 
         return BorrowingSerializer
 
