@@ -11,6 +11,7 @@ from borrowings.serializers import (
     BorrowingDetailSerializer,
     BorrowingCreateSerializer,
 )
+from telegram_api.telegram_helper import telegram_helper
 
 
 class BorrowingViewSet(
@@ -45,8 +46,21 @@ class BorrowingViewSet(
                 queryset = queryset.filter(user_id=user_id)
         return queryset
 
+    @staticmethod
+    def notify_borrowing(borrowing):
+        message = (
+            f"📚 *New Borrowing Created* \n\n"
+            f"*Borrowing ID:*   {borrowing.pk}\n"
+            f"*Borrowing Date:*   {borrowing.borrow_date}\n"
+            f"*Expected Return Date:*   {borrowing.expected_return_date}\n"
+            f"*Book Title:*   {borrowing.book.title}\n"
+            f"*Book Author:*   {borrowing.book.author}"
+        )
+        telegram_helper.send_message(message)
+
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        borrowing = serializer.save(user=self.request.user)
+        self.notify_borrowing(borrowing)
 
     @action(
         methods=["POST"],
