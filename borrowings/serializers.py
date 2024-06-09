@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from books.serializers import BookSerializer
 from borrowings.models import Borrowing
@@ -34,6 +35,11 @@ class BorrowingDetailSerializer(serializers.ModelSerializer):
 
 
 class BorrowingCreateSerializer(serializers.ModelSerializer):
+    def validate(self, attrs):
+        data = super(BorrowingCreateSerializer, self).validate(attrs=attrs)
+        Borrowing.validate_inventory(attrs["book"], ValidationError)
+        return data
+
     class Meta:
         model = Borrowing
         fields = (
