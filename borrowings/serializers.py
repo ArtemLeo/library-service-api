@@ -31,3 +31,14 @@ class BorrowingDetailSerializer(serializers.ModelSerializer):
             "user",
         )
         read_only_fields = fields
+
+
+class BorrowingCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Borrowing
+        fields = (
+            "id",
+            "borrow_date",
+            "expected_return_date",
+            "book",
+        )
