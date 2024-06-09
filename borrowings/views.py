@@ -1,3 +1,5 @@
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import mixins, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -42,7 +44,6 @@ class BorrowingViewSet(
             user_id = self.request.query_params.get("user_id")
             if user_id:
                 queryset = queryset.filter(user_id=user_id)
-
         return queryset
 
     @staticmethod
@@ -78,4 +79,22 @@ class BorrowingViewSet(
         serializer = self.get_serializer(borrowing, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "is_active",
+                type=OpenApiTypes.BOOL,
+                description="Filter by actual return date (ex. ?is_active=True)",
+            ),
+            OpenApiParameter(
+                "user_id",
+                type=OpenApiTypes.INT,
+                description="Filter by user id (ex. ?user_id=2)",
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
