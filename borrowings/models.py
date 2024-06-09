@@ -1,6 +1,9 @@
+from django.conf import settings
 from django.db import models
 from django.db.models import F, Q
 from django.utils import timezone
+
+from datetime import timedelta
 
 from books.models import Book
 
